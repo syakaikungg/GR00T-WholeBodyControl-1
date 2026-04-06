@@ -1546,6 +1546,11 @@ def run_pico(
     finally:
         socket.close()
         context.term()
+        if xrt is not None:
+            try:
+                xrt.close()
+            except Exception as e:
+                print(f"[run_pico] xrt.close() warning: {e}")
         print("Threads stopped, ZMQ socket closed")
 
 
@@ -1634,8 +1639,8 @@ class PlannerStreamer:
         )
 
         self.dt = 1.0 / max(1, poll_hz)
-        # Current locomotion mode, default IDLE
-        self.mode = LocomotionMode.IDLE
+        # Current locomotion mode, default SLOW_WALK so sticks work immediately
+        self.mode = LocomotionMode.SLOW_WALK
         self.prev_ab = False
         self.prev_xy = False
         # Persistent facing buffer (unit vector on XY plane)
@@ -2049,6 +2054,11 @@ def run_pico_manager(
         three_point.close()
         socket.close()
         context.term()
+        if xrt is not None:
+            try:
+                xrt.close()
+            except Exception as e:
+                print(f"[Manager] xrt.close() warning: {e}")
         print("[Manager] Shutdown complete")
 
 
@@ -2192,3 +2202,8 @@ if __name__ == "__main__":
             enable_waist_tracking=args.waist_tracking,
             enable_smpl_vis=args.vis_smpl,
         )
+
+    # Force-exit to prevent XRoboToolkit C++ destructor crash
+    # ("terminate called without an active exception")
+    import os
+    os._exit(0)

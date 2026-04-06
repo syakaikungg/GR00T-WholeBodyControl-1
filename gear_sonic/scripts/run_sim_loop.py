@@ -17,6 +17,17 @@ from gear_sonic.data.robot_model.robot_model import RobotModel
 
 ArgsConfig = SimLoopConfig
 
+DEFAULT_CAMERA_CONFIGS = {
+    "head_camera": {
+        "width": 640,
+        "height": 480,
+    },
+    "third_person": {
+        "width": 640,
+        "height": 480,
+    },
+}
+
 
 class SimWrapper:
     def __init__(self, robot_model: RobotModel, env_name: str, config: Dict[str, any], **kwargs):
@@ -35,13 +46,14 @@ class SimWrapper:
 
 def main(config: ArgsConfig):
     wbc_config = config.load_wbc_yaml()
-    # NOTE: we will override the interface to local if it is not specified
     wbc_config["ENV_NAME"] = config.env_name
 
     if config.enable_image_publish:
         assert (
             config.enable_offscreen
         ), "enable_offscreen must be True when enable_image_publish is True"
+
+    camera_configs = DEFAULT_CAMERA_CONFIGS if config.enable_offscreen else {}
 
     robot_model = instantiate_g1_robot_model()
 
@@ -51,6 +63,7 @@ def main(config: ArgsConfig):
         config=wbc_config,
         onscreen=wbc_config.get("ENABLE_ONSCREEN", True),
         offscreen=wbc_config.get("ENABLE_OFFSCREEN", False),
+        camera_configs=camera_configs,
     )
     # Start simulator as independent process
     SimulatorFactory.start_simulator(
